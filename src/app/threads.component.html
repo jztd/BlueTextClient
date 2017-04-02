@@ -1,0 +1,25 @@
+<div class="col-xs-12 threadsContainer">
+	<div class="col-xs-12 heading" style="color:white;"> <h2> Active Threads </h2> </div>
+	<div *ngIf="threads.length > 0">
+		<div class="col-xs-12 thread" *ngFor="let thread of threads">
+			<span class="col-xs-1 removeBtn" (click)="removeThread(thread)">&#215;</span>
+			<a class="col-xs-11 threadLink" [routerLink] = "['/conversation', thread]"><span class="col-xs-10">{{ thread }} </span></a>
+		</div>
+	</div>
+	<div *ngIf="threads.length === 0">
+		<h3> No Active Threads </h3>
+	</div>
+
+	<div id="addThread" (click)="showContacts()">&#43;</div>
+	
+	<div id="contacts" *ngIf="showContactsScreen">
+		<div *ngIf="contacts.length > 0">
+			<div style="border: solid 1px black;padding:18px; font-size:18pt;"> Choose Contact </div>
+			<div class="thread contact" *ngFor="let contact of contacts" (click)="navigateNewThread(contact)"> {{contact}} </div>
+		</div>
+		<div *ngIf="contacts.length === 0">
+			<h3> No Contacts </h3>
+		</div>
+	</div>
+
+</div>

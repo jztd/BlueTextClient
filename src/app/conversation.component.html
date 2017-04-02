@@ -1,0 +1,19 @@
+<div class="col-xs-12" style="padding:0px;">
+	<div class="col-xs-12 conversationNav">
+		<span class="col-xs-2"> <button class="btn btn-default" (click) = "toThreads()"> &#8592; </button> </span> <span class="col-xs-4 col-xs-offset-3 title" >{{ conversationName }} </span>
+	</div>
+	<div class="col-xs-12 mainConversation" id="mainConversation">
+		<div class="col-xs-10" 
+		*ngFor="let msg of messages" 
+		[class.col-xs-offset-2] = "msg.d === 'o'" 
+		[class.theirMessage]= "msg.d === 'i'" 
+		[class.myMessage]= "msg.d === 'o'"
+		>
+			<span [class.myMessageInner]="msg.d === 'o'" [class.theirMessageInner]="msg.d === 'i'"> 
+				{{msg.c}} 
+			</span>
+		</div>
+	</div>
+	<input type="text" (keydown.enter)= "send(msg.value)" [(ngModel)]="defaultMessage" class="col-xs-11" placeholder="Send Message" #msg/> 
+	<button class="btn btn-default col-xs-1" (click)="send(msg.value)">&#8594;</button>
+</div>

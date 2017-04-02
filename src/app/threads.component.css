@@ -1,0 +1,92 @@
+a, a:hover
+{
+	text-decoration:  none;
+	font-size: 18pt;
+	color: black;
+}
+
+a:hover
+{
+	background-color: #009EB2;
+	background-color: ;
+}
+.threadsContainer
+{
+	overflow: scroll;
+	min-height: 450px;
+	max-height: 450px;
+	height: 450px;
+	padding: 0px;
+}
+
+.thread
+{
+	border: solid 1px black;
+	background-color: #B8D7DE;
+
+
+}
+.threadLink
+{
+
+	text-align: right;
+	padding: 18px;
+}
+.heading
+{
+	background-color: #009EB2;
+}
+#addThread
+{
+	font-size: 25pt;
+	position: absolute;
+	bottom: 0;
+	right: 0;
+	z-index: 10;
+	border: solid 1px black;
+	border-radius: 50%;
+	width: 50px;
+	text-align: center;
+	padding-bottom:5px;
+
+}
+
+#addThread:hover
+{
+	background-color: lightgray;
+	cursor: pointer;
+}
+
+#contacts
+{
+	z-index: 11;
+	position: absolute;
+	margin-left:auto;
+	margin-right:auto;
+	background-color: white;
+	width: 60%;
+	font-size: 18pt;
+	max-height: 450px;
+	overflow: scroll;
+}
+
+.removeBtn
+{
+	font-size: 24pt;
+}
+.removeBtn:hover
+{
+	cursor: pointer;
+}
+
+.contact:hover
+{
+	cursor:pointer;
+	background-color: #009EB2;
+
+}
+
+
+
+
+

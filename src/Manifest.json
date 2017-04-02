@@ -1,0 +1,23 @@
+{
+    "manifest_version": 2,
+    "name": "BlueText",
+    "short_name": "Bluetooth Control for Your Text Messages",
+    "description": "This extension allows you to recieve and send text messages from your phone over bluetooth",
+    "version": "1.0.0",
+    "author": "Justin Baird @JZTD",
+
+    "browser_action":
+    {
+        "default_title": "BlueText",
+        "default_popup": "index.html"
+    },
+    "background":{"scripts":["/assets/js/background.ts"]},
+
+    "permissions":["storage", "notifications"],
+    "web_accessible_resources":[
+        "assets/css/*",
+        "assets/js/*"
+    ],
+    "content_security_policy": "script-src 'self' 'unsafe-eval' 'sha256-YP8MGjdsmiTctW3QyewxHqmp3D69Pzu7L767qeRtuNE='; object-src 'self'"
+
+}

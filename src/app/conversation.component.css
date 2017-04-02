@@ -1,0 +1,49 @@
+.myMessage
+{	
+	margin-top: 5px;
+}
+.myMessageInner
+{
+	padding: 15px;
+	border-radius: 10px;
+	text-align: right;
+	background-color: #B8D7DE;
+	float:right;
+}
+
+.theirMessage
+{
+	margin-top: 5px;
+}
+
+.theirMessageInner
+{
+	padding: 15px;
+	border-radius: 10px;
+	background-color: #009EB2;
+	float:left;
+
+}
+
+.conversationNav
+{
+	padding: 5px;
+	background-color: #009EB2;
+	margin-bottom: 20px;
+	width: 100%;
+}
+
+.title
+{
+	font-size: 25pt;
+	color: white;
+}
+
+.mainConversation
+{
+	min-height: 450px;
+	max-height: 450px;
+	margin-bottom: 10px;
+	overflow: scroll;
+	padding: 0px;
+}
