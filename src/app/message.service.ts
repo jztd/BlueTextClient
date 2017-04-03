@@ -5,6 +5,8 @@ import { Message } from './message';
 
 import { Subject } from 'rxjs/Subject';
 
+import * as io from "socket.io-client";
+
 const messageArray: Message[] = [ 
 {d:"o", c:"dork"}, 
 {d:"i", c:"nerd"},
@@ -26,6 +28,8 @@ export class MessageService
 	thisNumber: string;
 	private newMessagesSource = new Subject<Message>();
 	private newThreadSource = new Subject<any>();
+	private newConnectionSource = new Subject<any>();
+	newConnection = this.newConnectionSource.asObservable();
 	newThread = this.newThreadSource.asObservable();
 	newMessage = this.newMessagesSource.asObservable();
 	storage: Storage;
@@ -54,6 +58,8 @@ export class MessageService
 		{
 			this.activeThread = "";
 		}
+		this.socket = io("http://localhost:5000");
+		this.socket.on('connect', () => { console.log("conneted")});
 		//this.generateConversations();
 		let that = this;
 		window.addEventListener('storage', function(e){ that.handleMessage(e)});
@@ -224,12 +230,17 @@ export class MessageService
 	{
 		this.storage.setItem("BlueTextAddress", addr);
 	}
+	
 	handleMessage(msg: any): void
 	{
 		if(msg.key === this.activeThread)
 		{
 			let txtArray = JSON.parse(msg.newValue);
 			this.newMessagesSource.next(txtArray[txtArray.length - 1]);
+		}
+		else if(msg.key === "BlueTextConnected")
+		{
+			this.newConnectionSource.next({conected:msg.newValue});
 		}
 	}
 

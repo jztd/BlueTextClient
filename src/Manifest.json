@@ -18,6 +18,6 @@
         "assets/css/*",
         "assets/js/*"
     ],
-    "content_security_policy": "script-src 'self' 'unsafe-eval' 'sha256-YP8MGjdsmiTctW3QyewxHqmp3D69Pzu7L767qeRtuNE='; object-src 'self'"
+    "content_security_policy": "script-src 'self' 'unsafe-eval' ; object-src 'self'"
 
 }

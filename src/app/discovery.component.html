@@ -1,4 +1,5 @@
-<div class="col-xs-12">
+<div class="col-xs-12" style="margin-top: 25px;">
+	<div class= "alert alert-danger col-xs-12" *ngIf="errorMsg !== '' "> {{errorMsg}} </div>
 	<input class="col-xs-4" type="text" placeholder="Enter Address Provided by App" #addrInput /> 
 	<button class="col-xs-2 btn btn-default" (click)="connect(addrInput.value)"> Connect </button>
 </div>

@@ -1,10 +1,9 @@
 import { Component, OnInit } from '@angular/core';
-
+import { Router } from '@angular/router';
 import { MessageService } from './message.service';
 
 import { Device } from './device';
 
-//import * as bluetooth from 'nativescript-bluetooth';
 
 @Component({
 	moduleId: module.id,
@@ -14,27 +13,38 @@ import { Device } from './device';
 })
 export class SocketConnectionComponent implements OnInit  { 
 
-	scanning: boolean = false;
 	localDevices: Device[];
+	connected: boolean = false;
+	errorMsg: string;
 
-	constructor(private messageService: MessageService)
+	constructor(private messageService: MessageService, private router: Router)
 	{
 		this.localDevices = Array();
+		this.errorMsg = "";
 
 	}
 
 	connect(addr: string): void
 	{
+		this.errorMsg = "";
 		this.messageService.setAddress(addr);
 	}
 	ngOnInit(): void
 	{
-		this.messageService.newMessage.subscribe(data => this.handleMessage(data))
+		this.messageService.newConnection.subscribe(data => this.handleMessage(data))
 	}
 
 	handleMessage(data: any): void
 	{
-
+		if(data.connected === "connected")
+		{
+			this.router.navigate(['/threads']);
+			
+		}
+		else
+		{
+			this.errorMsg = "unable to connect, please check the address supplied by the app";
+		}
 	}
 
 
