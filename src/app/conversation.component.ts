@@ -15,7 +15,6 @@ import { MessageService } from './message.service';
 export class ConversationComponent implements OnInit, AfterViewChecked
 {
 	messages: Message[];
-	thisNumber: string;
 	conversationName: string;
 	defaultMessage = "";
 	constructor(private messageService: MessageService, private route: ActivatedRoute, private location: Location, private router: Router)
@@ -33,9 +32,8 @@ export class ConversationComponent implements OnInit, AfterViewChecked
 	loadMsgs(name: string): void
 	{
 		this.conversationName = name;
-		this.messageService.getNumber().then(result => this.thisNumber = result);
 		this.messageService.setConversation(this.conversationName);
-		this.messageService.getCoversationMessages(this.conversationName).then(result => 
+		this.messageService.getThreadMessages(this.conversationName).then(result => 
 		{
 			this.messages = result;	
 		}).catch( error => console.log(error));
@@ -57,6 +55,7 @@ export class ConversationComponent implements OnInit, AfterViewChecked
 		this.messageService.removeConversation();
 		this.router.navigate(['/threads']);
 	}
+	
 	handleNewMessage(msg: Message): void
 	{
 		this.messages.push(msg);

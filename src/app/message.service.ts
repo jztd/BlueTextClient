@@ -1,40 +1,31 @@
 import {Injectable} from '@angular/core';
 
-import { Device } from './device';
 import { Message } from './message';
+import { Thread } from './thread';
 
 import { Subject } from 'rxjs/Subject';
 
 import * as io from "socket.io-client";
 
-const messageArray: Message[] = [ 
-{d:"o", c:"dork"}, 
-{d:"i", c:"nerd"},
-{d:"i", c:"I LIKE EGGS"}
-];
 
-const otherMessageArray: Message[] =
-[
-{d:"o", c:"wazzup"},
-{d:"i" ,c:"nadda"},
-{d:"o", c:"Biatch"}
-];
-
-const contactArray: string[] = ["Shayla", "Jessica", "Mom", "Dad", "Larry"];
 
 @Injectable()
 export class MessageService
 {
-	thisNumber: string;
-	private newMessagesSource = new Subject<Message>();
-	private newThreadSource = new Subject<any>();
+	private newMessagesSource = new Subject<Message>(); // new messages added here if they are part of the active thread
+	private newThreadSource = new Subject<any>(); // when a message comes in that is not part of the thread list it is added here
 	private newConnectionSource = new Subject<any>();
+	private connected: boolean; // boolean flag if we are connected to the android server
+	private activeThread: string; // the current thread the user is viewing
+	private contacts; // dict of name: phonenumber;
+	private threads; // dict of names to threads;
+	private socket;
+	private address;
+
 	newConnection = this.newConnectionSource.asObservable();
 	newThread = this.newThreadSource.asObservable();
 	newMessage = this.newMessagesSource.asObservable();
-	storage: Storage;
-	activeThread: string;
-	private socket;
+
 	constructor()
 	{
 		this.onInit();
@@ -43,192 +34,97 @@ export class MessageService
 	onInit(): void
 	{
 		// subscribe to local storage changes
-		this.storage = localStorage;
-		if(!this.checkAvaliableStorage())
-		{
-			alert("local storage not available");
-		}
-		this.thisNumber = this.storage.getItem("BlueTextThisNumber");
-		let conv = this.storage.getItem("BlueTextConversation");
-		if(conv != null)
-		{
-			this.activeThread = conv;
-		}
-		else
-		{
-			this.activeThread = "";
-		}
-		this.socket = io("http://localhost:5000");
-		this.socket.on('connect', () => { console.log("conneted")});
-		//this.generateConversations();
-		let that = this;
-		window.addEventListener('storage', function(e){ that.handleMessage(e)});
+		this.address = "";
+		this.activeThread = "";
+		this.connected = false;
+		this.contacts = {};
+		this.threads = {};
 
+		this.socket = io("http://localhost:5000");
+		this.socket.on('connect', () => { 
+			console.log("connected");
+			this.connected = true;
+		});
+	
 	}
 
 // checks local storage if device exists
 	checkConnected(): boolean
 	{
-		//alert(this.storage.getItem("BlueTextDevice"));
-		if(!this.storage.getItem("BlueTextConnected"))
-		{
-			return false;
-		}
-		return true;
+		return this.connected;
 	}
-
-// sets a device 
-	setDevice(uuid:string, address:string, name:string): void
+	
+	setAddress(addr: string): void
 	{
-		let device: Device = { uuid: uuid, address: address, name: name}
-		this.storage.setItem("BlueTextDevice", JSON.stringify(device));
+		this.address = addr;
 	}
-
 // gets the name of the conversation that was last used
-	getActiveCoversation(): Promise<string>
+	
+	getThreadMessages(name:string): Promise<Message[]>
 	{
-		let conversation: string;
-		conversation = this.storage.getItem("BlueTextConversation");
-		if(conversation === null)
+		let test = name in this.threads;
+		if(test)
 		{
-			return Promise.resolve("");
-		}
-		return Promise.resolve(conversation);
-	}
-
-	getCoversationMessages(name:string): Promise<Message[]>
-	{
-		if(!this.storage.getItem(name))
-		{
-			return Promise.resolve(new Array());
+			return Promise.resolve(this.threads[name]);
 		}
 		else
 		{
-			let data = this.storage.getItem(name);
-			let parseData = JSON.parse(data);
-			return Promise.resolve(parseData);
-		}
-	}
-
-	generateConversations(): void
-	{
-		this.storage.removeItem("BlueTextThisNumber");
-		this.storage.setItem("BlueTextThisNumber", "3608090876");
-		this.storage.setItem("BlueTextConversation", "Shayla");
-		this.storage.setItem("BlueTextThreads", JSON.stringify({threads:["Shayla","Jessica","Dad", "Mom"]}));
-		this.storage.setItem("Shayla", JSON.stringify(messageArray));
-		this.storage.setItem("Jessica", JSON.stringify(otherMessageArray));
-		this.storage.setItem("BlueTextContacts", JSON.stringify(contactArray));
-	}
-// checks to make sure local storage is available, you kinda need this
-	checkAvaliableStorage(): boolean
-	{
-		try
-		{
-			let storage = window['localStorage'];
-			storage.setItem('x', 'avaliable');
-			storage.removeItem('x');
-			return true;
-		}
-		catch(e)
-		{
-			return false;
-		}
-	}
-
-	getNumber(): Promise<string>
-	{
-		if(this.thisNumber !== null)
-		{
-			return Promise.resolve(this.thisNumber);
-		}
-		else
-		{
-			return Promise.reject("no number stored");
+			return Promise.resolve(Array());
 		}
 	}
 
 	sendMessage(content: string): void
 	{
-		// what do we need to do?
-		// get messages, add new message to array
-		// save messages again
-		let messages: Message[];
-		let number: string;
-		let conversation: string;
-			this.getActiveCoversation().then(result => {
-				conversation = result;
-				this.getNumber().then(result => {
-					number = result;
-					this.getCoversationMessages(conversation).then(result => {
-						messages = result;
-						let msg =  {d:'o', c:content};
-						messages.push(msg);
-						this.storage.setItem(conversation, JSON.stringify(messages));
-						this.newMessagesSource.next(msg);
+		// we only send messages to active thread so...
+		this.threads[this.activeThread].AddMessage(this.contacts[this.activeThread], content);
+		// TODO: handle sending the message to the phone;
 
-						// handle bluetooth stuff here
-					});
-				});
-			});
 	}
 
 	removeConversation(): void
 	{
-		this.storage.setItem("BlueTextConversation", "");
 		this.activeThread = "";
 	}
 
 	setConversation(name: string): void
 	{
-		this.storage.setItem("BlueTextConversation", name);
 		this.activeThread = name;
 	}
 
 	getThreads(): Promise<string[]>
 	{
-		let T = JSON.parse(this.storage.getItem("BlueTextThreads"));
+		let T = this.threads.keys();
 		return Promise.resolve(T);
 
 	}
 
 	getContacts(): Promise<string[]>
 	{
-		let contacts = JSON.parse(this.storage.getItem("BlueTextContacts"));
-		return Promise.resolve(contacts);
+		return Promise.resolve(this.contacts);
 	}
 
-	addThread(name: string): void
+	addThread(name: string, num: string = ""): void
 	{
-		let t = this.storage.getItem("BlueTextThreads");
-		let T = JSON.parse(t)["threads"];
 
-		let i = T.indexOf(name);
-		if(i > -1)
+		// if num is blank lookup number from contacts
+		if(num === "")
 		{
-			T.splice(i,1);
+			num = this.contacts[name];
 		}
-		T.unshift(name);
-		this.storage.setItem("BlueTextThreads", JSON.stringify({threads:T}));
+		let T = new Thread(num,name);
+		this.threads[name] = T;
 		this.newThreadSource.next(name);
 	}
 
 	removeThread(name: string): void
 	{
-		let T = JSON.parse(this.storage.getItem("BlueTextThreads"))['threads'];
-
-		let i = T.indexOf(name);
-		if(i > -1)
+		let i = this.threads.indexOf(name);
+		if( i > -1)
 		{
-			T.splice(i,1);
+			delete this.threads[name];
 		}
-		this.storage.setItem("BlueTextThreads", JSON.stringify({threads:T}));
-		this.storage.removeItem(name);
-	}
 
-	setAddress(addr: string): void
-	{
-		this.storage.setItem("BlueTextAddress", addr);
+		// TODO: send command to phone to delete threads
 	}
 	
 	handleMessage(msg: any): void
@@ -245,3 +141,8 @@ export class MessageService
 	}
 
 }
+
+
+
+
+

@@ -11,17 +11,10 @@ import { MessageService } from './message.service';
 export class AppComponent implements OnInit
 { 
 
-	deviceLoaded: boolean;
-
-	default_device: Device =  {uuid:"123456789", address:"0987654321", name:"jflajslfjlaksdf"};
-	constructor(private router: Router, private messageService: MessageService)
-	{
-		this.deviceLoaded = false;
-	}
+	constructor(private router: Router, private messageService: MessageService){}
+	
 	ngOnInit(): void
 	{
-		console.log("app.component init();");
-		//this.messageService.setDevice("","","");
 		// see if device is already loaded
 		if(!this.messageService.checkConnected())
 		{
@@ -29,22 +22,7 @@ export class AppComponent implements OnInit
 		}
 		else
 		{
-			let conversation: string;
-			this.messageService.getActiveCoversation().then(result => {
-				// we have a device if no conversation is loaded, go to the list of threads
-				conversation = result;
-				if(conversation === "")
-				{
-					this.router.navigate(['/threads']);
-				}
-
-				// else there was an open conversation, go to that conversation page
-				else
-				{
-					this.router.navigate(['/conversation', conversation]);
-				}
-			});
-			
+			this.router.navigate(['/threads']);	
 		}
 
 	}	
