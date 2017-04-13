@@ -17,10 +17,11 @@ export class MessageService
 	private newConnectionSource = new Subject<any>();
 	private connected: boolean; // boolean flag if we are connected to the android server
 	private activeThread: string; // the current thread the user is viewing
-	private contacts; // dict of name: phonenumber;
-	private threads; // dict of names to threads;
+	private contacts: {}; // dict of phoneNumber: name;
+	private threads: {}; // dict of phoneNumber: to threads;
 	private socket;
 	private address;
+	private thisNumber;
 
 	newConnection = this.newConnectionSource.asObservable();
 	newThread = this.newThreadSource.asObservable();
@@ -33,19 +34,11 @@ export class MessageService
 
 	onInit(): void
 	{
-		// subscribe to local storage changes
 		this.address = "";
 		this.activeThread = "";
 		this.connected = false;
 		this.contacts = {};
 		this.threads = {};
-
-		this.socket = io("http://localhost:5000");
-		this.socket.on('connect', () => { 
-			console.log("connected");
-			this.connected = true;
-		});
-	
 	}
 
 // checks local storage if device exists
@@ -57,9 +50,10 @@ export class MessageService
 	setAddress(addr: string): void
 	{
 		this.address = addr;
+		this.connect(addr);
 	}
-// gets the name of the conversation that was last used
 	
+// gets the message associated with a name	
 	getThreadMessages(name:string): Promise<Message[]>
 	{
 		let test = name in this.threads;
@@ -86,14 +80,14 @@ export class MessageService
 		this.activeThread = "";
 	}
 
-	setConversation(name: string): void
+	setConversation(number: string): void
 	{
-		this.activeThread = name;
+		this.activeThread = number;
 	}
 
 	getThreads(): Promise<string[]>
 	{
-		let T = this.threads.keys();
+		let T = Object.keys(this.threads);
 		return Promise.resolve(T);
 
 	}
@@ -112,32 +106,87 @@ export class MessageService
 			num = this.contacts[name];
 		}
 		let T = new Thread(num,name);
-		this.threads[name] = T;
+		this.threads[num] = T;
 		this.newThreadSource.next(name);
 	}
 
-	removeThread(name: string): void
+	removeThread(number: string): void
 	{
-		let i = this.threads.indexOf(name);
+		let i = Object.keys(this.threads).indexOf(number)
 		if( i > -1)
 		{
-			delete this.threads[name];
+			delete this.threads[number];
 		}
 
 		// TODO: send command to phone to delete threads
 	}
 	
-	handleMessage(msg: any): void
+	// when new messages come in it hits this message, also if you send a message from your phone it shoudl hit here too
+	handleNewMessage(msg: any): void
 	{
-		if(msg.key === this.activeThread)
+		let M = new Message();
+		
+		M.d = 'o';
+		M.c = msg.content;
+
+		if(msg.number === this.thisNumber)
 		{
-			let txtArray = JSON.parse(msg.newValue);
-			this.newMessagesSource.next(txtArray[txtArray.length - 1]);
+			M.d = 'i';
 		}
-		else if(msg.key === "BlueTextConnected")
+
+		// if this message is for the thread that is being displayed
+		if(msg.number === this.activeThread)
 		{
-			this.newConnectionSource.next({conected:msg.newValue});
+			this.newMessagesSource.next(M);
 		}
+
+		// add message to its thread
+		this.threads[msg.number].AddMesage(msg.number, msg.content);
+
+	}
+
+	connect(addr: string){
+		this.socket = io("http://" + addr);
+		
+		this.socket.on('connect', () => { 
+			console.log("connected");
+			this.connected = true;
+			this.newConnectionSource.next({connected: "connected"});
+		});
+		
+		this.socket.on('connect_error', (err) => {
+			console.log(err);
+			this.newConnectionSource.next({connected: "error"});
+		});
+
+		this.socket.on('message', (data) =>{
+			this.handleNewMessage(data);
+			console.log(data);
+		});
+
+		// phone sent us contacts
+		this.socket.on('contacts', (data) =>
+		{
+			this.contacts = JSON.parse(data);
+		});
+
+		// phone sent us current threads
+		this.socket.on('threads', (data) => {
+			let obj = JSON.parse(data).threads;
+
+			for(let j = 0; j < obj.length; j++)
+			{
+				let D = obj[j];
+				let T = new Thread(D.number, D.name);
+
+				for( let i = 0; i < D.messages.length; i++)
+				{
+					T.AddMessage(D.messages[i].number, D.messages[i].content);
+				}
+				this.threads[D.number] = T;
+			}
+		});
+
 	}
 
 }
