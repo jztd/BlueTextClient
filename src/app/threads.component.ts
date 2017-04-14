@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { MessageService } from './message.service';
 
+import { Thread } from './thread';
 @Component({
 	moduleId: module.id,
 	selector: 'threads',
@@ -10,45 +11,38 @@ import { MessageService } from './message.service';
 })
 export class ThreadsComponent implements OnInit
 {
-	threads: string[];
-	contacts: string[];
+	threads: Thread[];
+	contacts = Array();
 	showContactsScreen: boolean = false;
-	constructor(private messageService: MessageService, private router: Router)
-	{
-		this.threads = Array();
-	}
+	constructor(private messageService: MessageService, private router: Router){}
 
 	ngOnInit(): void
 	{
 		this.messageService.getThreads().then(result => {
-			this.threads = result["threads"];
+			this.threads = result;
+			console.log(this.threads);
 		});
 		this.messageService.newThread.subscribe(result => this.addThread(result));
-		this.messageService.getContacts().then(result => this.contacts = result);
+		this.messageService.getContacts().then(result => 
+			{
+				this.contacts = result;
+				console.log(this.contacts);
+			});
 	}
 
-	addThread(name: string): void
+	addThread(thread: any): void
 	{
-		let i = this.threads.indexOf(name);
-		if( i > -1)
-		{
-			this.threads.splice(i, 1);
-		}
-		this.threads.unshift(name);
+		this.threads[thread.number] = thread.name;
 	}
-	removeThread(name: string): void
+	removeThread(number: string): void
 	{
-		let i = this.threads.indexOf(name);
-		if(i > -1)
-		{
-			this.threads.splice(i,1);
-		}
-		this.messageService.removeThread(name);
+			delete this.threads[number];
 	}
-	navigateNewThread(name: string): void
+
+	navigateNewThread(number: string, name:string): void
 	{
-		this.messageService.addThread(name);
-		this.router.navigate(['/conversation', name]);
+		this.messageService.addThread(name, number);
+		this.router.navigate(['/conversation', number]);
 	}
 
 	showContacts(): void

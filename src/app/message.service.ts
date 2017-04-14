@@ -35,6 +35,7 @@ export class MessageService
 	onInit(): void
 	{
 		this.address = "";
+		this.thisNumber = "123-4567";
 		this.activeThread = "";
 		this.connected = false;
 		this.contacts = {};
@@ -54,23 +55,21 @@ export class MessageService
 	}
 	
 // gets the message associated with a name	
-	getThreadMessages(name:string): Promise<Message[]>
+	getThreadDetails(number): Promise<any>
 	{
-		let test = name in this.threads;
-		if(test)
-		{
-			return Promise.resolve(this.threads[name]);
-		}
-		else
-		{
-			return Promise.resolve(Array());
-		}
+		return Promise.resolve(this.threads[number]);
 	}
 
 	sendMessage(content: string): void
 	{
 		// we only send messages to active thread so...
-		this.threads[this.activeThread].AddMessage(this.contacts[this.activeThread], content);
+		this.threads[this.activeThread].AddMessage(this.activeThread, content);
+		// console.log('msg service: send message');
+		// console.log(this.threads[this.activeThread]);
+		// let M =  new Message();
+		// M.c = content;
+		// M.d = 'o';
+		// this.newMessagesSource.next(M);
 		// TODO: handle sending the message to the phone;
 
 	}
@@ -85,16 +84,25 @@ export class MessageService
 		this.activeThread = number;
 	}
 
-	getThreads(): Promise<string[]>
+	getThreads(): Promise<any> // returns an array of thread objects
 	{
-		let T = Object.keys(this.threads);
-		return Promise.resolve(T);
+		let T = Array();
 
+		for(var K in this.threads)
+		{
+			T.push(this.threads[K]);
+		}
+		return Promise.resolve(T);
 	}
 
-	getContacts(): Promise<string[]>
+	getContacts(): Promise<any>
 	{
-		return Promise.resolve(this.contacts);
+		let T = Array();
+		for(var K in this.contacts)
+		{
+			T.push({number:K, name: this.contacts[K]});
+		}
+		return Promise.resolve(T);
 	}
 
 	addThread(name: string, num: string = ""): void
@@ -124,6 +132,8 @@ export class MessageService
 	// when new messages come in it hits this message, also if you send a message from your phone it shoudl hit here too
 	handleNewMessage(msg: any): void
 	{
+		console.log('msg service handle message:');
+		console.log(msg);
 		let M = new Message();
 		
 		M.d = 'o';
@@ -151,7 +161,11 @@ export class MessageService
 		this.socket.on('connect', () => { 
 			console.log("connected");
 			this.connected = true;
-			this.newConnectionSource.next({connected: "connected"});
+			// ask for contacts
+			this.socket.emit('client-connect');
+			this.socket.emit('get-contacts');
+			// ask for threads
+			this.socket.emit('get-threads');
 		});
 		
 		this.socket.on('connect_error', (err) => {
@@ -167,13 +181,13 @@ export class MessageService
 		// phone sent us contacts
 		this.socket.on('contacts', (data) =>
 		{
-			this.contacts = JSON.parse(data);
+			this.contacts = JSON.parse(data).contacts; // parse json object should be in form {contacts: {}}
 		});
 
 		// phone sent us current threads
 		this.socket.on('threads', (data) => {
-			let obj = JSON.parse(data).threads;
-
+			let obj = JSON.parse(data).threads; // parse the json object should be in form {threads: [individual threads]}
+			console.log(obj.length);
 			for(let j = 0; j < obj.length; j++)
 			{
 				let D = obj[j];
@@ -185,6 +199,11 @@ export class MessageService
 				}
 				this.threads[D.number] = T;
 			}
+
+			this.newConnectionSource.next({connected: "connected"});
+			console.log(this.contacts);
+			console.log(this.threads);
+
 		});
 
 	}

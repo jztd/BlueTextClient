@@ -25,17 +25,22 @@ export class ConversationComponent implements OnInit, AfterViewChecked
 	ngOnInit(): void
 	{
 		this.route.params.subscribe((params: Params) => this.loadMsgs(params['name']));
-		this.messageService.newMessage.subscribe(result => this.handleNewMessage(result));
+		this.messageService.newMessage.subscribe(result => 
+		{
+			console.log(result);
+			this.handleNewMessage(result);
+		});
 
 	}
 
 	loadMsgs(name: string): void
 	{
-		this.conversationName = name;
-		this.messageService.setConversation(this.conversationName);
-		this.messageService.getThreadMessages(this.conversationName).then(result => 
+		this.messageService.setConversation(name);
+		this.messageService.getThreadDetails(name).then(result => 
 		{
-			this.messages = result;	
+			this.messages = result.messages;
+			this.conversationName = result.name;
+
 		}).catch( error => console.log(error));
 	}
 
@@ -55,9 +60,10 @@ export class ConversationComponent implements OnInit, AfterViewChecked
 		this.messageService.removeConversation();
 		this.router.navigate(['/threads']);
 	}
-	
+
 	handleNewMessage(msg: Message): void
 	{
+		//console.log(msg);
 		this.messages.push(msg);
 	}
 
